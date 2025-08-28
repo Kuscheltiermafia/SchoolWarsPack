@@ -23,6 +23,11 @@ jobs:
         run: |
           zip -r SchoolWarsPack.zip . -x ".github/workflows/*" ".git/*"
 
+      - name: Get SHA1 of current commit
+        id: sha1
+        run: |
+          echo "sha1=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
       - name: Check if tag exists
         id: check_tag
         run: |
@@ -37,13 +42,13 @@ jobs:
       - name: Create tag if it does not exist
         if: steps.check_tag.outputs.tag_exists == 'false'
         env:
-          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG_NAME="${{ github.event.inputs.tag_name }}"
+          SHA1="${{ steps.sha1.outputs.sha1 }}"
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git tag "$TAG_NAME" "$(git rev-parse HEAD)"
-          git remote set-url origin https://x-access-token:${PAT_TOKEN}@github.com/${{ github.repository }}
+          git tag "$TAG_NAME" "$SHA1"
           git push origin "$TAG_NAME"
 
       - name: Create Release and Upload ZIP
@@ -52,4 +57,4 @@ jobs:
           tag_name: ${{ github.event.inputs.tag_name }}
           files: SchoolWarsPack.zip
         env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
