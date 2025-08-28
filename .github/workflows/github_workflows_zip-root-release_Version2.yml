@@ -15,9 +15,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Remove .github/workflows directory
+      - name: Remove .github directory
         run: |
-          rm -rf .github/workflows
+          rm -rf .github
 
       - name: Create zip file of repo at root (excluding .github/workflows)
         run: |
