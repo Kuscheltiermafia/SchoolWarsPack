@@ -1,0 +1,26 @@
+name: Create Root-Level ZIP Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  zip-root:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Remove .github/workflows directory
+        run: |
+          rm -rf .github/workflows
+
+      - name: Create zip file of repo at root (excluding .github/workflows)
+        run: |
+          zip -r SchoolWarsPack.zip . -x ".github/workflows/*" ".git/*"
+
+      - name: Create Release and Upload ZIP
+        uses: softprops/action-gh-release@v1
+        with:
+          files: SchoolWarsPack.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
