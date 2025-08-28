@@ -15,9 +15,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Remove .github directory
+      - name: Remove .github/workflows directory
         run: |
-          rm -rf .github
+          rm -rf .github/workflows
 
       - name: Create zip file of repo at root (excluding .github/workflows)
         run: |
@@ -26,22 +26,25 @@ jobs:
       - name: Check if tag exists
         id: check_tag
         run: |
-          TAG_EXISTS=$(git ls-remote --tags origin refs/tags/${{ github.event.inputs.tag_name }})
+          TAG_NAME="${{ github.event.inputs.tag_name }}"
+          TAG_EXISTS=$(git ls-remote --tags origin "refs/tags/${TAG_NAME}")
           if [ -z "$TAG_EXISTS" ]; then
-            echo "Tag does not exist."
             echo "tag_exists=false" >> $GITHUB_OUTPUT
           else
-            echo "Tag exists."
             echo "tag_exists=true" >> $GITHUB_OUTPUT
           fi
 
       - name: Create tag if it does not exist
         if: steps.check_tag.outputs.tag_exists == 'false'
+        env:
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
+          TAG_NAME="${{ github.event.inputs.tag_name }}"
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git tag ${{ github.event.inputs.tag_name }}
-          git push origin ${{ github.event.inputs.tag_name }}
+          git tag "$TAG_NAME" "$(git rev-parse HEAD)"
+          git remote set-url origin https://x-access-token:${PAT_TOKEN}@github.com/${{ github.repository }}
+          git push origin "$TAG_NAME"
 
       - name: Create Release and Upload ZIP
         uses: softprops/action-gh-release@v1
@@ -49,4 +52,4 @@ jobs:
           tag_name: ${{ github.event.inputs.tag_name }}
           files: SchoolWarsPack.zip
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
